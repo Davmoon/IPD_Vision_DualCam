@@ -1,0 +1,2 @@
+[console_scripts]
+degirum_cli = degirum_cli.cli:cli

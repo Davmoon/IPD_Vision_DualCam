@@ -1,0 +1,220 @@
+Metadata-Version: 2.1
+Name: degirum_cli
+Version: 0.2.0
+Summary: Degirum AI package with CLI for image and video prediction
+Author: DeGirum
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: click
+Requires-Dist: pyyaml
+Requires-Dist: degirum
+Requires-Dist: degirum-tools
+
+# Degirum CLI
+
+**Degirum CLI** is a command-line tool for running AI inference on images, videos, and benchmarking AI models using 
+the Degirum PySDK. The CLI provides default configurations for quick use, while allowing you to customize your commands 
+by providing your own arguments.
+
+## Features
+
+- **Run AI inference on images and videos**: Use pre-trained models from Degirum's model zoo for object detection, face recognition, and more.
+- **Benchmark multiple models**: Evaluate the performance of AI models by measuring FPS and efficiency across different configurations.
+- **Flexible configuration**: Run commands with sensible defaults, or override options via the command line or a configuration file.
+- **Support for extra options**: Pass additional keyword arguments to the inference engine, such as `measure_time=True`, directly from the CLI.
+
+## Installation
+
+1. Clone the repository:
+    ```bash
+    git clone https://github.com/DeGirum/degirum_cli.git
+    cd <your-repo-directory>
+    ```
+
+1. Install the required dependencies:
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+1. Install the package locally:
+    ```bash
+    pip install .
+    ```
+
+## Usage
+
+### Setting the `DEGIRUM_CLOUD_TOKEN` Environment Variable
+
+To access hardware options and model zoos in the DeGirum Cloud Platform with `degirum_cli`, you need to pass the `DEGIRUM_CLOUD_TOKEN` 
+variable to the functions. The token can be set as an environment variable instead of passing it as an argument to every function. 
+For detailed instructions on how to set this environment variable across various systems (including Linux, macOS, Windows, and 
+virtual environments), please refer to [this guide](https://gist.github.com/shashichilappagari/ab856f4ed85fbfb623bc949cf453925b). 
+Rest of the user guide below assumes that the token is set as an environment variable. If you prefer not to set it, remember to 
+pass it as an argument (`--token`) to the various command line utilities described below.
+
+
+### Running with Defaults
+
+The **Degirum CLI** comes with default values for most options, allowing you to run commands immediately without specifying arguments.
+
+1. **Image Inference (with defaults)**
+    - You can run AI inference on a default image with a pre-configured model:
+      ```bash
+      degirum_cli predict-image
+      ```
+    - This will use the following defaults:
+      - Inference Host: `@cloud`
+      - Model Zoo: `degirum/public`
+      - Model: `yolov8n_relu6_coco--640x640_quant_n2x_orca1_1`
+      - Image Source: A built-in example image.
+
+1. **Video Inference (with defaults)**
+    - You can run AI inference on a default video with a pre-configured model:
+      ```bash
+      degirum_cli predict-video
+      ```
+
+1. **Benchmarking (with defaults)**
+    - Run the benchmark command with default settings:
+      ```bash
+      degirum_cli benchmark
+      ```
+    - This will benchmark multiple default models and use the cloud for inference.
+
+### Using the Help Command
+
+The **Degirum CLI** provides built-in help for all commands, making it easy to see the available options, their descriptions, 
+and the default values. Use the `--help` flag to display the full details of any command.
+
+For example:
+
+1. **Help for `predict-image` Command**:
+    ```bash
+    degirum_cli predict-image --help
+    ```
+
+    This will show the following information:
+
+    ```bash
+    Usage: degirum_cli predict-image [OPTIONS] [EXTRA_ARGS]...
+
+    Run AI inference on an image with extra options.
+
+    Options:
+      --inference-host-address TEXT  Hardware location for inference (e.g.,
+                                     @cloud, @local, IP).  [default: @cloud]
+      --model-zoo-url TEXT           URL or path to the model zoo.  [default:
+                                     degirum/public]
+      --model-name TEXT              Name of the model to use for inference.
+                                     [default: yolov8n_relu6_coco--640x640_quant_n2x_orca1_1]
+      --image-source TEXT            Path or URL to the image for inference.
+                                     [default: https://raw.githubusercontent.com/DeGirum/PySDKExamples/main/images/ThreePersons.jpg]
+      --token TEXT                   Cloud platform token to use for inference.
+                                     Attempts to load from environment if not provided.
+      --help                         Show this message and exit.
+    ```
+
+    This output provides the default values for each argument and explains the usage of the command.
+
+1. **Help for Other Commands**:
+    - You can also run the `--help` flag with other commands like `predict-video`, `run-composition` or `benchmark` to see the 
+    specific options available for each.
+
+    ```bash
+    degirum_cli predict-video --help
+    degirum_cli run-composition --help
+    degirum_cli benchmark --help
+
+    ```
+
+This feature makes it easy to explore the available options and use the CLI effectively.
+
+### Customizing the Command
+
+Once you're familiar with the defaults, you can override the parameters to fit your needs by passing arguments.
+
+1. **Image Inference with Custom Arguments**
+    - Example of customizing image inference:
+      ```bash
+      degirum_cli predict-image --inference-host-address @cloud --model-zoo-url degirum/public --model-name yolov8n_relu6_coco--640x640_quant_n2x_orca1_1 --image-source /path/to/image.jpg
+      ```
+
+    - You can also pass extra arguments as key-value pairs:
+      ```bash
+      degirum_cli predict-image --inference-host-address @cloud --model-zoo-url degirum/public --model-name yolov8n_relu6_coco--640x640_quant_n2x_orca1_1 --image-source /path/to/image.jpg measure_time=True
+      ```
+
+1. **Video Inference with Custom Arguments**
+    - Example of running inference on a video with custom arguments:
+      ```bash
+      degirum_cli predict-video --inference-host-address @cloud --model-zoo-url degirum/public --model-name yolov8n_relu6_coco--640x640_quant_n2x_orca1_1 --video-source /path/to/video.mp4
+      ```
+
+1. **Running Gizmo Compositions**
+
+    To run gizmo composition you need to define it in the YAML configuration file. Then you pass the YAML file name as `--config-file`
+    parameter of `run-composition` command:
+
+    ```bash
+    degirum_cli run-composition --config-file /path/to/config.yaml
+    ```
+
+    Additionally, you may pass `--allow-stop` flag to be able to stop running composition from the terminal by pressing the *Enter* key.
+
+1. **Benchmarking with Custom Configurations**
+    - Example of customizing the benchmark command:
+      ```bash
+      degirum_cli benchmark --config-file /path/to/config.yaml --iterations 200 --token your_token measure_time=True
+      ```
+
+    - If no configuration file is provided, default model zoo and models are used:
+      ```bash
+      degirum_cli benchmark --iterations 100 --token your_token
+      ```
+
+    - Example configuration file (`config.yaml`):
+      ```yaml
+      model_zoo_url: degirum/public
+      model_names:
+        - mobilenet_v1_imagenet--224x224_quant_n2x_orca1_1
+        - yolov8n_relu6_coco--640x640_quant_n2x_orca1_1
+      ```
+
+### Command-Line Options
+
+- **`--inference-host-address`**: Specify where to run inference, such as `@cloud` for cloud servers or IP addresses for local servers.
+- **`--model-zoo-url`**: URL or path to the model zoo for loading pre-trained models.
+- **`--model-name`**: Specify the name of the model to use for inference.
+- **`--image-source` / `--video-source`**: Path to the image or video file to be used for inference.
+- **`--iterations`**: Number of iterations for benchmarking.
+- **`--token`**: Provide your Degirum cloud platform token.
+- **Additional arguments**: Pass additional options (e.g., `measure_time=True`) for fine-tuning the inference process.
+
+## Getting Started
+
+1. **Run Image Inference (Default Command)**:
+    ```bash
+    degirum_cli predict-image
+    ```
+
+1. **Run Video Inference (Default Command)**:
+    ```bash
+    degirum_cli predict-video
+    ```
+
+1. **Run Benchmarking (Default Command)**:
+    ```bash
+    degirum_cli benchmark
+    ```
+
+1. **Run Image Inference with Custom Arguments**:
+    ```bash
+    degirum_cli predict-image --inference-host-address @cloud --model-zoo-url degirum/public --model-name yolov8n_relu6_coco--640x640_quant_n2x_orca1_1 --image-source /path/to/image.jpg
+    ```
+
+### Notes:
+- If no `token` is provided via CLI or environment, an error will be raised, so make sure to set your Degirum cloud token properly.
+
