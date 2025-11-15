@@ -30,6 +30,43 @@ def picamera_generator(index):
     finally:
         picam2.stop()
 
+class NotificationGizmo(dgstreams.Gizmo):
+    def __init__(self, camera_name):
+        super().__init__([(10,)])
+        self.camera_name = camera_name
+        self.frame_count = 0
+
+    def run(self):
+        #print(f"[{self.camera_name}]")
+        
+        for result_wrapper in self.get_input(0):
+            inf_result = None
+
+            if hasattr(result_wrapper.data, 'result'):
+                inf_result = result_wrapper.data
+            else:
+                try:
+                    meta_list = result_wrapper.meta._meta_list
+                    for item in meta_list:
+                        if hasattr(item, 'results'):
+                            inf_result = item
+                            break
+                except:
+                    pass
+
+            if inf_result and inf_result.results:
+                for obj in inf_result.results:
+                    label = obj.get('label', '')
+                    score = obj.get('score', 0) * 100
+
+                    if 'scooter' in label:
+                        print(f"\n[{self.camera_name}] '{label}' ({score:.1f}%)", flush=True)
+
+            self.frame_count += 1
+            if self.frame_count % 60 == 0:
+                print(".", end="", flush=True)
+            
+            self.send_result(result_wrapper)
 
 # Define the configurations for video file and webcam
 configurations = [
@@ -55,6 +92,7 @@ models = [
 # define gizmos
 sources = [dgstreams.IteratorSourceGizmo(picamera_generator(int(cfg["source"]))) for cfg in configurations]
 detectors = [dgstreams.AiSimpleGizmo(model) for model in models]
+notifiers = [NotificationGizmo(cfg["display_name"]) for cfg in configurations]
 display = dgstreams.VideoDisplayGizmo(
     [cfg["display_name"] for cfg in configurations], show_ai_overlay=True, show_fps=True
 )
@@ -62,7 +100,7 @@ display = dgstreams.VideoDisplayGizmo(
 # create pipeline
 pipeline = (
     (source >> detector for source, detector in zip(sources, detectors)),
-    (detector >> display[di] for di, detector in enumerate(detectors)),
+    (detector >> notifiers >> display[di] for di, (detector, notifiers) in enumerate(zip(detectors, notifiers))),
 )
 
 # start composition
