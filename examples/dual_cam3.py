@@ -4,6 +4,8 @@ import degirum_tools.streams as dgstreams
 from picamera2 import Picamera2
 import cv2
 import time
+import request
+import os
 
 # inference_host_address = "@cloud"
 inference_host_address = "@local"
@@ -15,6 +17,16 @@ zoo_url = "../models"
 # set token
 #token = degirum_tools.get_token()
 token = '' # leave empty for local inference
+
+# 이미지 전송 서버 주소
+SERVER_LINK = "https://davmo.xyz/upload"
+
+# 이미지 저장 폴더
+SAVE_DIR = "captures"
+
+# 저장 폴더 없으면 생성하도록
+if not os.path.exists(SAVE_DIR):
+    os.makedirs(SAVE_DIR)
 
 def picamera_generator(index):
     picam2 = Picamera2(index)
@@ -40,8 +52,12 @@ class NotificationGizmo(dgstreams.Gizmo):
         #print(f"[{self.camera_name}]")
         
         for result_wrapper in self.get_input(0):
+            if self._abort:
+                break
+            
             inf_result = None
 
+            #예외처리를 위해 속성 먼저 검색.
             if hasattr(result_wrapper.data, 'result'):
                 inf_result = result_wrapper.data
             else:
